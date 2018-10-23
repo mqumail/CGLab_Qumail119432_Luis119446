@@ -1,3 +1,5 @@
+##Muhammad Qumail and Michael Wilde
+
 ## OpenGLFramework
 is a small cross-platform framework for learning OpenGL programming
 
