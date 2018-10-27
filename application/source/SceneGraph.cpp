@@ -3,6 +3,8 @@
 
 SceneGraph::SceneGraph(void)
 {
+	root = null;
+	name = "theSceneGraph";
 }
 
 
