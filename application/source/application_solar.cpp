@@ -18,6 +18,8 @@ using namespace gl;
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
+using namespace std;
+
 
 ApplicationSolar::ApplicationSolar(std::string const& resource_path)
  :Application{resource_path}
@@ -25,6 +27,9 @@ ApplicationSolar::ApplicationSolar(std::string const& resource_path)
  ,m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})}
  ,m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)}
 {
+  theSceneGraph = new SceneGraph();
+  theSceneGraph.setRoot();
+  
   initializeGeometry();
   initializeShaderPrograms();
 }
@@ -95,6 +100,8 @@ void ApplicationSolar::initializeShaderPrograms() {
 // load models
 void ApplicationSolar::initializeGeometry() {
   model planet_model = model_loader::obj(m_resource_path + "models/sphere.obj", model::NORMAL);
+
+  cout << m_resource_path + "models/sphere.obj";
 
   // generate vertex array object
   glGenVertexArrays(1, &planet_object.vertex_AO);
