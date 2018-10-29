@@ -1,6 +1,6 @@
 #include "Node.hpp"
 
-class GeometryNode : public Node
+class CameraNode : public Node
 {
 public:
 	CameraNode();

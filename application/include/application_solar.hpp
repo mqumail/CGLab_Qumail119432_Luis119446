@@ -4,6 +4,7 @@
 #include "application.hpp"
 #include "model.hpp"
 #include "structs.hpp"
+#include "SceneGraph.hpp"
 
 // gpu representation of model
 class ApplicationSolar : public Application {
@@ -21,7 +22,9 @@ class ApplicationSolar : public Application {
   void resizeCallback(unsigned width, unsigned height);
 
   // draw all objects
-  void render() const;
+  void render();
+
+  void outputPlanet(float x, float y, float z);
 
  protected:
   void initializeShaderPrograms();
@@ -42,7 +45,7 @@ class ApplicationSolar : public Application {
   glm::fmat4 m_view_projection;
 
   // theSceneGraph
-  SceneGraph theSceneGraph;
+  //SceneGraph theSceneGraph;
 
 };
 
