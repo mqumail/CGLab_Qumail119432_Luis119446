@@ -1,6 +1,7 @@
 #include "application_solar.hpp"
 #include "window_handler.hpp"
 
+
 #include "utils.hpp"
 #include "shader_loader.hpp"
 #include "model_loader.hpp"
@@ -28,7 +29,7 @@ ApplicationSolar::ApplicationSolar(std::string const& resource_path)
  ,m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)}
 {
   theSceneGraph = new SceneGraph();
-  theSceneGraph.setRoot();
+  //theSceneGraph.setRoot();
   
   initializeGeometry();
   initializeShaderPrograms();
@@ -40,12 +41,20 @@ ApplicationSolar::~ApplicationSolar() {
   glDeleteVertexArrays(1, &planet_object.vertex_AO);
 }
 
-void ApplicationSolar::render() const {
+
+void ApplicationSolar::render()  {
+	outputPlanet(0.0, 0.0, 0.0);
+	outputPlanet(0.0, 0.0, -3.0);
+
+}
+
+
+void ApplicationSolar::outputPlanet(float x, float y, float z) {
   // bind shader to upload uniforms
   glUseProgram(m_shaders.at("planet").handle);
 
   glm::fmat4 model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime()), glm::fvec3{0.0f, 1.0f, 0.0f});
-  model_matrix = glm::translate(model_matrix, glm::fvec3{0.0f, 0.0f, -1.0f});
+  model_matrix = glm::translate(model_matrix, glm::fvec3{x, y, z});
   glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
                      1, GL_FALSE, glm::value_ptr(model_matrix));
 
