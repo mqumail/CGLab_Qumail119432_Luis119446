@@ -1,11 +1,11 @@
-#include "CameraNode.h"
+#include "CameraNode.hpp"
 
 CameraNode::CameraNode(void)
 {
 
 }
 
-~CameraNode::CameraNode(void)
+CameraNode::~CameraNode(void)
 {
 
 }

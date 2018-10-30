@@ -13,10 +13,10 @@ class SceneGraph
 		~SceneGraph(void);
 		string getName();
 		void setName(string passedName);
-		Node getRoot();
-		void setRoot(Node passedNode);
+		Node* getRoot();
+		void setRoot(Node* passedNode);
 
 	private:
 		string name;
-		Node root;
+		Node* root;
 };

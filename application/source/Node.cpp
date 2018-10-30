@@ -1,12 +1,14 @@
-#include "Node.h"
+#include "Node.hpp"
 
 
 Node::Node(void)
 {
+	name = "theNode";
 }
 
 Node::~Node(void)
 {
+
 }
 
 Node* Node::getParent()
@@ -21,7 +23,7 @@ void Node::setParent(Node* passedNode)
 
 Node Node::getChildren(string passedChildren)
 {
-  for (std::list<Node>::iterator i = children.begin(); i != children.end(); ++i)
+  /*for (std::list<Node>::iterator i = children.begin(); i != children.end(); ++i)
   {
     if (i->getName().compare(passedChildren))
     {
@@ -29,7 +31,7 @@ Node Node::getChildren(string passedChildren)
     }
   }
 
-  return null;
+  return null;*/
 }
 
 std::list<Node> Node::getChildrenList()
@@ -74,16 +76,16 @@ void Node::setWorldTransform(glm::mat4 passedMat4)
 
 void Node::addChildren(Node passedNode)
 {
-  children.add(passedNode);
+  //children.add(passedNode);
 }
 
 Node Node::removeChildren(string passedString)
 {
   for (std::list<Node>::iterator i = children.begin(); i != children.end(); ++i)
   {
-    if (i->getName().compare(passedChildren))
-    {
-      children.remove(i);
-    }
+    //if (i->getName().compare(passedChildren))
+    //{
+    //  children.remove(i);
+    //}
   }
 }

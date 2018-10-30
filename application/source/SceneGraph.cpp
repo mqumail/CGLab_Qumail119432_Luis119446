@@ -1,9 +1,10 @@
-#include "SceneGraph.h"
+#include "SceneGraph.hpp"
+#include "Node.hpp"
 
 
 SceneGraph::SceneGraph(void)
 {
-	root = null;
+	root = new Node();
 	name = "theSceneGraph";
 }
 
@@ -22,12 +23,12 @@ void SceneGraph::setName(string passedName)
 	name = passedName;
 }
 
-Node SceneGraph::getRoot()
+Node* SceneGraph::getRoot()
 {
 	return root;
 }
 
-void SceneGraph::setRoot(Node passedNode)
+void SceneGraph::setRoot(Node* passedNode)
 {
 	root = passedNode;
 }

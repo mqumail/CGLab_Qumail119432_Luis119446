@@ -44,9 +44,6 @@ class ApplicationSolar : public Application {
   // camera projection matrix
   glm::fmat4 m_view_projection;
 
-  // theSceneGraph
-  //SceneGraph theSceneGraph;
-
 };
 
 #endif

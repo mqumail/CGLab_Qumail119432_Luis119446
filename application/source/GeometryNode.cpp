@@ -5,7 +5,7 @@ GeometryNode::GeometryNode(void)
 
 }
 
-~GeometryNode::GeometryNode(void)
+GeometryNode::~GeometryNode(void)
 {
 
 }
