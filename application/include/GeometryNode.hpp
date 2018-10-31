@@ -7,8 +7,8 @@ class GeometryNode : public Node
 public:
     GeometryNode();
     ~GeometryNode();
-    model getGeometry();
-    void setGeometry(model theModel);
+    model* getGeometry();
+    void setGeometry(model* theModel);
 
 protected:
     model* myModel;

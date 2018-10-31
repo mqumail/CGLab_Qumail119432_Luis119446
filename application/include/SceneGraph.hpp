@@ -9,8 +9,8 @@ class SceneGraph
 {
 
 	public:
-		SceneGraph(void);
-		~SceneGraph(void);
+		SceneGraph();
+		~SceneGraph();
 		string getName();
 		void setName(string passedName);
 		Node* getRoot();

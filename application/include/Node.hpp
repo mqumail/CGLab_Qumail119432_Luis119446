@@ -12,8 +12,8 @@ public:
 	~Node(void);
 	Node* getParent();
 	void setParent(Node* passedNode);
-	Node getChildren(string passedChildren);
-	std::list<Node> getChildrenList();
+	Node* getChildren(string passedChildren);
+	std::list<Node*> getChildrenList();
 	string getName();
 	string getPath();
 	int getDepth();
@@ -22,11 +22,11 @@ public:
 	glm::mat4 getWorldTransform();
 	void setWorldTransform(glm::mat4 passedMat4);
 	void addChildren(Node passedNode);
-	Node removeChildren(string passedString);
+	Node* removeChildren(string passedString);
 
 private:
-	Node* parent;
-	std::list<Node> children;
+	Node* parent = NULL;
+	std::list<Node*> children;
 	string name;
 	string path;
 	int dept;

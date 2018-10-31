@@ -27,6 +27,7 @@ class ApplicationSolar : public Application {
   void outputPlanet(float x, float y, float z);
 
  protected:
+  void initializeSceneGraph();
   void initializeShaderPrograms();
   void initializeGeometry();
   // update uniform values
@@ -36,6 +37,8 @@ class ApplicationSolar : public Application {
   // upload view matrix
   void uploadView();
 
+  void traverseSceneGraph(Node* theNode);
+
   // cpu representation of model
   model_object planet_object;
   
@@ -44,6 +47,7 @@ class ApplicationSolar : public Application {
   // camera projection matrix
   glm::fmat4 m_view_projection;
 
+  SceneGraph theSceneGraph;
 };
 
 #endif
