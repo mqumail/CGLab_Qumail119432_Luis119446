@@ -1,3 +1,15 @@
+//****************************************************
+// File: GeometryNode.hpp
+//
+// Purpose: holds the class definition of 
+//			GeometryNode class.
+//
+// Written By: Muhammad Qumail & Michael Wilde
+//
+// Compiler: Visual C++ 2017 & openGL 
+//              
+//****************************************************
+
 #include "Node.hpp"
 #include "model.hpp"
 

@@ -1,3 +1,15 @@
+//****************************************************
+// File: CameraNode.hpp
+//
+// Purpose: holds the class definition of 
+//			CameraNode class.
+//
+// Written By: Muhammad Qumail & Michael Wilde
+//
+// Compiler: Visual C++ 2017 & openGL 
+//              
+//****************************************************
+
 #include "Node.hpp"
 
 class CameraNode : public Node

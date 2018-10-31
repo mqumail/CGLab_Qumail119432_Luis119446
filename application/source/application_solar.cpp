@@ -28,12 +28,11 @@ ApplicationSolar::ApplicationSolar(std::string const& resource_path)
  ,planet_object{}
  ,m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})}
  ,m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)}
-{
-	//SceneGraph theSceneGraph();
-	//theSceneGraph.setRoot();
-  
+{ 
   initializeGeometry();
   initializeShaderPrograms();
+
+  // Method to initialize SceneGraph and setup the planets
   initializeSceneGraph();
 }
 
@@ -43,11 +42,8 @@ ApplicationSolar::~ApplicationSolar() {
   glDeleteVertexArrays(1, &planet_object.vertex_AO);
 }
 
-
-void ApplicationSolar::render()  {
-	//outputPlanet(0.0, 0.0, 0.0);
-	//outputPlanet(0.0, 0.0, -3.0);
-
+void ApplicationSolar::render() 
+{
 	traverseSceneGraph(theSceneGraph.getRoot());
 }
 
@@ -149,68 +145,93 @@ void ApplicationSolar::initializeGeometry() {
   planet_object.num_elements = GLsizei(planet_model.indices.size());
 }
 
-void ApplicationSolar::initializeSceneGraph() {
+//****************************************************
+// Function: initializeSceneGraph
+//
+// Purpose: Initialize the member variable 
+//			theSceneGraph with the planets and sun
+//
+//****************************************************
+void ApplicationSolar::initializeSceneGraph() 
+{
+	// solarSystem is the root for the sceneGraph
 	GeometryNode* solarSystem = new GeometryNode();
+	solarSystem->setName("Solar System");
 
 	theSceneGraph.setRoot(solarSystem);
 
+	// theSun is the child of solarSystem
 	GeometryNode* theSun = new GeometryNode();
+	theSun->setName("Sun");
 	theSun->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 0.0, 0.0, 0.0 }));
-	//solarSystem->addChildren(theSun);
+	solarSystem->addChildren(theSun);
 
+	// the code below is creating 8 planets and setting them as children to the sun
+	// It is also positioning them so they are not all starting at the same position
 	GeometryNode* mercury = new GeometryNode();
-	mercury->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 5.0, 0.0, 0.0 }));
-	//theSun->addChildren(mercury);
+	mercury->setName("Mercury");
+	mercury->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 5.0, 0.0, 1.0 }));
+	theSun->addChildren(mercury);
 
 	GeometryNode* venus = new GeometryNode();
-	venus->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 10.0, 0.0, 0.0 }));
-	//theSun->addChildren(venus);
+	venus->setName("Venus");
+	venus->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 10.0, 0.0, 10.0 }));
+	theSun->addChildren(venus);
 
 	GeometryNode* earth = new GeometryNode();
-	earth->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 15.0, 0.0, 0.0 }));
-	//theSun->addChildren(earth);
+	earth->setName("Earth");
+	earth->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 15.0, 0.0, 3.0 }));
+	theSun->addChildren(earth);
 
 	GeometryNode* mars = new GeometryNode();
-	mars->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 20.0, 0.0, 0.0 }));
-	//theSun->addChildren(mars);
+	mars->setName("Mars");
+	mars->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 20.0, 0.0, -1.0 }));
+	theSun->addChildren(mars);
 
 	GeometryNode* jupiter = new GeometryNode();
-	jupiter->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 25.0, 0.0, 0.0 }));
-	//theSun->addChildren(jupiter);
+	jupiter->setName("Jupiter");
+	jupiter->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 25.0, 0.0, 15.0 }));
+	theSun->addChildren(jupiter);
 
 	GeometryNode* saturn = new GeometryNode();
-	saturn->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 30.0, 0.0, 0.0 }));
-	//theSun->addChildren(saturn);
+	saturn->setName("Saturn");
+	saturn->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 30.0, 0.0, 19.0 }));
+	theSun->addChildren(saturn);
 
 	GeometryNode* uranus = new GeometryNode();
-	uranus->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 35.0, 0.0, 0.0 }));
-	//theSun->addChildren(uranus);
+	uranus->setName("Uranus");
+	uranus->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 35.0, 0.0, 1.0 }));
+	theSun->addChildren(uranus);
 
 	GeometryNode* neptune = new GeometryNode();
-	neptune->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 40.0, 0.0, 0.0 }));
-	//theSun->addChildren(neptune);
-
-
+	neptune->setName("Neptune");
+	neptune->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 40.0, 0.0, 5.0 }));
+	theSun->addChildren(neptune);
 }
 
-
-void ApplicationSolar::traverseSceneGraph(Node* theNode) {
-		// Recursively traverses the SceneGraph
-
+//****************************************************
+// Function: traverseSceneGraph
+//
+// Purpose: Recursively traverses the SceneGraph
+//
+//****************************************************
+void ApplicationSolar::traverseSceneGraph(Node* theNode) 
+{
+	// First it gets the child of the solar system which is the sun
+	// then it gets the children of the sun recursively and calls outputPlanet method to
+	// draw them on the graph
 	std::list<Node*> childList = theNode->getChildrenList();
 
+	// The line that will stop this function to run forever
 	if (childList.empty()) return;
-
-
-	//std::_List_iterator<Node*> currentChild = childList.begin();
-	for (int i=0;i<childList.size();i++)
+	
+	for (std::list<Node*>::iterator i = childList.begin(); i != childList.end(); ++i)
 	{
-		Node* currentChild = *(childList.begin());
+		Node* currentChild = *i;
 		traverseSceneGraph(currentChild);
 		glm::vec3 tmpVec = glm::vec3(currentChild->getLocalTransform()[3]);
 		outputPlanet(tmpVec[0], tmpVec[1], tmpVec[2]);
 	}
-
 }
 
 

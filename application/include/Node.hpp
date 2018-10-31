@@ -1,3 +1,15 @@
+//****************************************************
+// File: Node.hpp
+//
+// Purpose: holds the class definition of 
+//			Node class.
+//
+// Written By: Muhammad Qumail & Michael Wilde
+//
+// Compiler: Visual C++ 2017 & openGL 
+//              
+//****************************************************
+
 #include <iostream>
 #include <glm\glm.hpp>
 #include <list>
@@ -15,13 +27,14 @@ public:
 	Node* getChildren(string passedChildren);
 	std::list<Node*> getChildrenList();
 	string getName();
+	void setName(string passedName);
 	string getPath();
 	int getDepth();
 	glm::mat4 getLocalTransform();
 	void setLocalTransform(glm::mat4 passedMat4);
 	glm::mat4 getWorldTransform();
 	void setWorldTransform(glm::mat4 passedMat4);
-	void addChildren(Node passedNode);
+	void addChildren(Node* passedNode);
 	Node* removeChildren(string passedString);
 
 private:
