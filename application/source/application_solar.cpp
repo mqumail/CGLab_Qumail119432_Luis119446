@@ -5,8 +5,7 @@
 #include "utils.hpp"
 #include "shader_loader.hpp"
 #include "model_loader.hpp"
-//#include "SceneGraph.hpp"
-//#include "SceneGraph.cpp"
+#include "GeometryNode.hpp"
 
 #include <glbinding/gl/gl.h>
 // use gl definitions from glbinding 
@@ -30,11 +29,12 @@ ApplicationSolar::ApplicationSolar(std::string const& resource_path)
  ,m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})}
  ,m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)}
 {
-	SceneGraph theSceneGraph();
+	//SceneGraph theSceneGraph();
 	//theSceneGraph.setRoot();
   
   initializeGeometry();
   initializeShaderPrograms();
+  initializeSceneGraph();
 }
 
 ApplicationSolar::~ApplicationSolar() {
@@ -45,9 +45,10 @@ ApplicationSolar::~ApplicationSolar() {
 
 
 void ApplicationSolar::render()  {
-	outputPlanet(0.0, 0.0, 0.0);
-	outputPlanet(0.0, 0.0, -3.0);
+	//outputPlanet(0.0, 0.0, 0.0);
+	//outputPlanet(0.0, 0.0, -3.0);
 
+	traverseSceneGraph(theSceneGraph.getRoot());
 }
 
 
@@ -137,7 +138,7 @@ void ApplicationSolar::initializeGeometry() {
 
    // generate generic buffer
   glGenBuffers(1, &planet_object.element_BO);
-  // bind this as an vertex array buffer containing all attributes
+  // bind this as an vertex array buffer containing all attributes0.0
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, planet_object.element_BO);
   // configure currently bound array buffer
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, model::INDEX.size * planet_model.indices.size(), planet_model.indices.data(), GL_STATIC_DRAW);
@@ -147,6 +148,71 @@ void ApplicationSolar::initializeGeometry() {
   // transfer number of indices to model object 
   planet_object.num_elements = GLsizei(planet_model.indices.size());
 }
+
+void ApplicationSolar::initializeSceneGraph() {
+	GeometryNode* solarSystem = new GeometryNode();
+
+	theSceneGraph.setRoot(solarSystem);
+
+	GeometryNode* theSun = new GeometryNode();
+	theSun->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 0.0, 0.0, 0.0 }));
+	//solarSystem->addChildren(theSun);
+
+	GeometryNode* mercury = new GeometryNode();
+	mercury->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 5.0, 0.0, 0.0 }));
+	//theSun->addChildren(mercury);
+
+	GeometryNode* venus = new GeometryNode();
+	venus->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 10.0, 0.0, 0.0 }));
+	//theSun->addChildren(venus);
+
+	GeometryNode* earth = new GeometryNode();
+	earth->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 15.0, 0.0, 0.0 }));
+	//theSun->addChildren(earth);
+
+	GeometryNode* mars = new GeometryNode();
+	mars->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 20.0, 0.0, 0.0 }));
+	//theSun->addChildren(mars);
+
+	GeometryNode* jupiter = new GeometryNode();
+	jupiter->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 25.0, 0.0, 0.0 }));
+	//theSun->addChildren(jupiter);
+
+	GeometryNode* saturn = new GeometryNode();
+	saturn->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 30.0, 0.0, 0.0 }));
+	//theSun->addChildren(saturn);
+
+	GeometryNode* uranus = new GeometryNode();
+	uranus->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 35.0, 0.0, 0.0 }));
+	//theSun->addChildren(uranus);
+
+	GeometryNode* neptune = new GeometryNode();
+	neptune->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 40.0, 0.0, 0.0 }));
+	//theSun->addChildren(neptune);
+
+
+}
+
+
+void ApplicationSolar::traverseSceneGraph(Node* theNode) {
+		// Recursively traverses the SceneGraph
+
+	std::list<Node*> childList = theNode->getChildrenList();
+
+	if (childList.empty()) return;
+
+
+	//std::_List_iterator<Node*> currentChild = childList.begin();
+	for (int i=0;i<childList.size();i++)
+	{
+		Node* currentChild = *(childList.begin());
+		traverseSceneGraph(currentChild);
+		glm::vec3 tmpVec = glm::vec3(currentChild->getLocalTransform()[3]);
+		outputPlanet(tmpVec[0], tmpVec[1], tmpVec[2]);
+	}
+
+}
+
 
 ///////////////////////////// callback functions for window events ////////////
 // handle key input

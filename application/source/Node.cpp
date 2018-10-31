@@ -21,7 +21,7 @@ void Node::setParent(Node* passedNode)
   parent = passedNode;
 }
 
-Node Node::getChildren(string passedChildren)
+Node* Node::getChildren(string passedChildren)
 {
   /*for (std::list<Node>::iterator i = children.begin(); i != children.end(); ++i)
   {
@@ -30,11 +30,11 @@ Node Node::getChildren(string passedChildren)
       return i;
     }
   }
-
-  return null;*/
+  */
+	return new Node();
 }
 
-std::list<Node> Node::getChildrenList()
+std::list<Node*> Node::getChildrenList()
 {
   return children;
 }
@@ -51,7 +51,8 @@ string Node::getPath()
 
 int Node::getDepth()
 {
-  return depth;
+  //return depth;
+	return 0;
 }
 
 glm::mat4 Node::getLocalTransform()
@@ -79,13 +80,15 @@ void Node::addChildren(Node passedNode)
   //children.add(passedNode);
 }
 
-Node Node::removeChildren(string passedString)
+Node* Node::removeChildren(string passedString)
 {
-  for (std::list<Node>::iterator i = children.begin(); i != children.end(); ++i)
+//  for (std::list<Node>::iterator i = children.begin(); i != children.end(); ++i)
   {
     //if (i->getName().compare(passedChildren))
     //{
     //  children.remove(i);
     //}
   }
+
+  return new Node();
 }

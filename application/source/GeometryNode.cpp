@@ -10,14 +10,14 @@ GeometryNode::~GeometryNode(void)
 
 }
 
-model getGeometry()
+model* GeometryNode::getGeometry()
 {
     return myModel;
 }
 
-void setGeometry(model* theModel)
+void GeometryNode::setGeometry(model* theModel)
 {
-    myModel = theModel;
+	myModel = theModel;
 }
 
 
