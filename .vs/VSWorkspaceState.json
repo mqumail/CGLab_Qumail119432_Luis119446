@@ -1,10 +1,12 @@
 {
   "ExpandedNodes": [
     "",
-    "\\application",
-    "\\application\\include",
-    "\\application\\source"
+    "\\framework",
+    "\\framework\\include",
+    "\\resources",
+    "\\resources\\models",
+    "\\resources\\shaders"
   ],
-  "SelectedNode": "\\application\\include\\application_solar.hpp",
+  "SelectedNode": "\\framework\\include\\structs.hpp",
   "PreviewInSolutionExplorer": false
 }
