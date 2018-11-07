@@ -1,12 +1,12 @@
 {
   "ExpandedNodes": [
     "",
-    "\\framework",
+    "\\application",
     "\\framework\\include",
     "\\resources",
     "\\resources\\models",
     "\\resources\\shaders"
   ],
-  "SelectedNode": "\\framework\\include\\structs.hpp",
+  "SelectedNode": "\\resources\\shaders\\vao.vert",
   "PreviewInSolutionExplorer": false
 }

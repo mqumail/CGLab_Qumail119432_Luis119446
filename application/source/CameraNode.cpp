@@ -93,6 +93,7 @@ glm::mat4 CameraNode::getProjectionMatrix(void)
 //****************************************************
 void CameraNode::setProjectionMatrix(glm::mat4 newMatrix)
 {
+	// For future pass in the 4 values and create a mat4 in the function
 	projectionMatrix = newMatrix;
 }
 

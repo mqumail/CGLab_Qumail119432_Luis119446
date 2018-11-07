@@ -36,6 +36,7 @@ public:
 	void setWorldTransform(glm::mat4 passedMat4);
 	void addChildren(Node* passedNode);
 	Node* removeChildren(string passedString);
+	float angularSpeed;
 
 private:
 	Node* parent = NULL;

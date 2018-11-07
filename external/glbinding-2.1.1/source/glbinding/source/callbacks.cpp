@@ -123,10 +123,11 @@ void before(const FunctionCall & call)
 
 void after(const FunctionCall & call)
 {
-    if (g_afterCallback)
-    {
-        g_afterCallback(call);
-    }
+	if (g_afterCallback)
+	{
+		g_afterCallback(call);
+	}
+
 }
 
 
