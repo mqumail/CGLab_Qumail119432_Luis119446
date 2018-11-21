@@ -33,7 +33,7 @@ class ApplicationSolar : public Application {
   // draw all objects
   void render();
   // draw all planets
-  void outputPlanet(float x, float y, float z, float angularSpeed);
+  void outputPlanet(Node * planet);
   // upload stars
   void uploadStars();
 

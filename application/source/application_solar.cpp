@@ -6,6 +6,7 @@
 #include "shader_loader.hpp"
 #include "model_loader.hpp"
 #include "GeometryNode.hpp"
+#include "PointLightNode.hpp"
 
 #include <glbinding/gl/gl.h>
 // use gl definitions from glbinding 
@@ -21,6 +22,8 @@ using namespace gl;
 
 #include <iostream>
 using namespace std;
+
+glm::vec4 origin;
 
 // function to generate a random float between min and max parameters
 // ref: https://stackoverflow.com/questions/5289613/generate-random-float-between-two-floats
@@ -131,30 +134,6 @@ void ApplicationSolar::initializeStarPoints()
 	star_object.draw_mode = GL_POINTS;
 }
 
-///////////////////////////// intialisation functions /////////////////////////
-// load shader sources
-void ApplicationSolar::initializeShaderPrograms() {
-	// store shader program objects in container
-	m_shaders.emplace("planet", shader_program{ {{GL_VERTEX_SHADER,m_resource_path + "shaders/simple.vert"},
-											 {GL_FRAGMENT_SHADER, m_resource_path + "shaders/simple.frag"}} });
-
-	// request uniform locations for shader program
-	m_shaders.at("planet").u_locs["NormalMatrix"] = -1;
-	m_shaders.at("planet").u_locs["ModelMatrix"] = -1;
-	m_shaders.at("planet").u_locs["ViewMatrix"] = -1;
-	m_shaders.at("planet").u_locs["ProjectionMatrix"] = -1;
-
-	// store shader program objects in container
-	m_shaders.emplace("star", shader_program{{
-		{GL_VERTEX_SHADER,m_resource_path + "shaders/vao.vert"}, 
-		{GL_FRAGMENT_SHADER, m_resource_path + "shaders/vao.frag"}
-		}});
-	
-	// request uniform locations for shader program
-	m_shaders.at("star").u_locs["ViewMatrix"] = -1;
-	m_shaders.at("star").u_locs["ProjectionMatrix"] = -1;
-}
-
 //****************************************************
 // Function: initializeSceneGraph
 //
@@ -197,12 +176,6 @@ void ApplicationSolar::initializeSceneGraph()
 	earth->angularSpeed = 2.0;
 	theSun->addChildren(earth);
 
-	//GeometryNode* earth_moon = new GeometryNode();
-	//earth->setName("Earth Moon");
-	//earth->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 15.0, 0.0, 3.0 }));
-	//earth->angularSpeed = 2.0;
-	//earth->addChildren(earth_moon);
-
 	GeometryNode* mars = new GeometryNode();
 	mars->setName("Mars");
 	mars->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 20.0, 0.0, -1.0 }));
@@ -233,10 +206,47 @@ void ApplicationSolar::initializeSceneGraph()
 	theSun->addChildren(neptune);
 }
 
+///////////////////////////// intialisation functions /////////////////////////
+// load shader sources
+void ApplicationSolar::initializeShaderPrograms() {
+	// store shader program objects in container
+	m_shaders.emplace("planet", shader_program{ {{GL_VERTEX_SHADER,m_resource_path + "shaders/simple.vert"},
+											 {GL_FRAGMENT_SHADER, m_resource_path + "shaders/simple.frag"}} });
+
+	// request uniform locations for shader program
+	m_shaders.at("planet").u_locs["NormalMatrix"] = -1;
+	m_shaders.at("planet").u_locs["ModelMatrix"] = -1;
+	m_shaders.at("planet").u_locs["ViewMatrix"] = -1;
+	m_shaders.at("planet").u_locs["ProjectionMatrix"] = -1;
+
+	// Assignment 3
+	m_shaders.at("planet").u_locs["DiffuseColor"] = -1;
+	m_shaders.at("planet").u_locs["SunPosition"] = -1;
+	m_shaders.at("planet").u_locs["ShaderMode"] = -1;
+
+	// store shader program objects in container
+	m_shaders.emplace("star", shader_program{{
+		{GL_VERTEX_SHADER,m_resource_path + "shaders/vao.vert"}, 
+		{GL_FRAGMENT_SHADER, m_resource_path + "shaders/vao.frag"}
+		}});
+	
+	// request uniform locations for shader program
+	m_shaders.at("star").u_locs["ViewMatrix"] = -1;
+	m_shaders.at("star").u_locs["ProjectionMatrix"] = -1;
+}
+
 void ApplicationSolar::render() 
 {
 	uploadStars();
 	traverseSceneGraph(theSceneGraph.getRoot());
+}
+
+// Method to actually draw the stars (render them), called by render method.
+void ApplicationSolar::uploadStars()
+{
+	glUseProgram(m_shaders.at("star").handle);
+	glBindVertexArray(star_object.vertex_AO);
+	glDrawArrays(star_object.draw_mode, 0, 6000);
 }
 
 //****************************************************
@@ -259,17 +269,21 @@ void ApplicationSolar::traverseSceneGraph(Node* theNode)
 	{
 		Node* currentChild = *i;
 		traverseSceneGraph(currentChild);
-		glm::vec3 tmpVec = glm::vec3(currentChild->getLocalTransform()[3]);
-		outputPlanet(tmpVec[0], tmpVec[1], tmpVec[2], currentChild->angularSpeed);
+		outputPlanet(currentChild);
 	}
 }
 
-void ApplicationSolar::outputPlanet(float x, float y, float z, float angularSpeed) {
+void ApplicationSolar::outputPlanet(Node * planet) 
+{
+	std::string planetName = planet->getName();
+
 	// bind shader to upload uniforms
 	glUseProgram(m_shaders.at("planet").handle);
 
-	glm::fmat4 model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime()) * angularSpeed, glm::fvec3{ 0.0f, 1.0f, 0.0f });
-	model_matrix = glm::translate(model_matrix, glm::fvec3{ x, y, z });
+	//glm::fmat4 model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime()) * planet->angularSpeed, glm::fvec3{ 0.0f, 1.0f, 0.0f });
+	glm::fmat4 model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime()), glm::fvec3{ 0.0f, 1.0f, 0.0f });
+	glm::vec3 tmpVec = glm::vec3(planet->getLocalTransform()[3]);
+	model_matrix = glm::translate(model_matrix, glm::fvec3{ tmpVec[0], tmpVec[1], tmpVec[2] });
 	glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
 		1, GL_FALSE, glm::value_ptr(model_matrix));
 
@@ -278,19 +292,78 @@ void ApplicationSolar::outputPlanet(float x, float y, float z, float angularSpee
 	glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
 		1, GL_FALSE, glm::value_ptr(normal_matrix));
 
+	// Assignment 3
+	PointLightNode* pointLightNode = new PointLightNode();
+	if (planetName == "Sun")
+	{
+		pointLightNode->setLightColor(glm::vec3(0.9f, 0.7f, 0.2f));
+		pointLightNode->setLightIntensity(1);
+	}
+	else if (planetName == "Mercury")
+	{
+		pointLightNode->setLightColor(glm::vec3(1.0f, 1.0f, 0.0f));
+		pointLightNode->setLightIntensity(1);
+	}
+	else if (planetName == "Venus")
+	{
+		pointLightNode->setLightColor(glm::vec3(1.0f, 0.0f, 1.0f));
+		pointLightNode->setLightIntensity(1);
+	}
+	else if (planetName == "Earth")
+	{
+		pointLightNode->setLightColor(glm::vec3(0.0f, 1.0f, 1.0f));
+		pointLightNode->setLightIntensity(1);
+	}
+	else if (planetName == "Mars")
+	{
+		pointLightNode->setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
+		pointLightNode->setLightIntensity(1);
+	}
+	else if (planetName == "Jupiter")
+	{
+		pointLightNode->setLightColor(glm::vec3(0.3f, 0.4f, 1.0f));
+		pointLightNode->setLightIntensity(1);
+	}
+	else if (planetName == "Saturn")
+	{
+		pointLightNode->setLightColor(glm::vec3(1.0f, 0.4f, 0.9f));
+		pointLightNode->setLightIntensity(1);
+	}
+	else if (planetName == "Uranus")
+	{
+		pointLightNode->setLightColor(glm::vec3(0.1f, 0.3f, 0.4f));
+		pointLightNode->setLightIntensity(1);
+	}
+	else if (planetName == "Neptune")
+	{
+		pointLightNode->setLightColor(glm::vec3(0.4f, 0.2f, 0.9f));
+		pointLightNode->setLightIntensity(1);
+	}
+	
+	glm::vec3 planetColor(pointLightNode->getLightColor());
+	glUniform3fv(m_shaders.at("planet").u_locs.at("DiffuseColor"), 1, glm::value_ptr(planetColor));
+
+	glm::fmat4 view_matrix = glm::inverse(m_view_transform);
+	
+
+	if (!planetName.compare("Sun"))
+	{
+		origin = glm::vec4{ 0.0, 0.0, 0.0 , 0.0 };
+	}
+	else
+	{
+		origin = glm::vec4{ 0.0, 0.0, 0.0 , 1.0 };
+	}
+	
+	glm::vec4 pos4 = view_matrix * origin;
+	glm::vec3 pos3(pos4);
+	glUniform3fv(m_shaders.at("planet").u_locs.at("SunPosition"), 1, glm::value_ptr(pos3));
+
 	// bind the VAO to draw
 	glBindVertexArray(planet_object.vertex_AO);
 
 	// draw bound vertex array using bound shader
 	glDrawElements(planet_object.draw_mode, planet_object.num_elements, model::INDEX.type, NULL);
-}
-
-// Method to actually draw the stars (render them), called by render method.
-void ApplicationSolar::uploadStars()
-{
-	glUseProgram(m_shaders.at("star").handle);
-	glBindVertexArray(star_object.vertex_AO);
-	glDrawArrays(star_object.draw_mode, 0, 6000);
 }
 
 //ApplicationSolar::Star ApplicationSolar::initializeStar(float position[], float color[], string name) {
@@ -308,9 +381,27 @@ void ApplicationSolar::uploadStars()
 //	return newStar;
 //}
 
-void ApplicationSolar::uploadView() {
+// update uniform locations
+void ApplicationSolar::uploadUniforms()
+{
+	//upload uniform values to new locations
+	updateUniformLocations();
+	uploadView();
+	uploadProjection();
+}
+
+void ApplicationSolar::uploadView() 
+{
+	glUseProgram(m_shaders.at("planet").handle);
+
   // vertices are transformed in camera space, so camera transform must be inverted
   glm::fmat4 view_matrix = glm::inverse(m_view_transform);
+  
+  // Assignment 3
+  glm::vec4 sunPos4 = view_matrix * origin;
+  glm::vec3 sunPos3(sunPos4);
+  glUniform3fv(m_shaders.at("planet").u_locs.at("SunPosition"), 1, glm::value_ptr(sunPos3));
+  
   // upload matrix to gpu
   glUseProgram(m_shaders.at("planet").handle);
   glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ViewMatrix"),
@@ -322,7 +413,8 @@ void ApplicationSolar::uploadView() {
 					1, GL_FALSE, glm::value_ptr(view_matrix));
 }
 
-void ApplicationSolar::uploadProjection() {
+void ApplicationSolar::uploadProjection() 
+{
   // upload matrix to gpu
 	glUseProgram(m_shaders.at("planet").handle);
   glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ProjectionMatrix"),
@@ -334,14 +426,7 @@ void ApplicationSolar::uploadProjection() {
 	  1, GL_FALSE, glm::value_ptr(m_view_projection));
 }
 
-// update uniform locations
-void ApplicationSolar::uploadUniforms() { 
-  // bind shader to which to upload unforms
-  glUseProgram(m_shaders.at("planet").handle);
-  // upload uniform values to new locations
-  uploadView();
-  uploadProjection();
-}
+
 
 ///////////////////////////// callback functions for window events ////////////
 // handle key input
@@ -361,6 +446,17 @@ void ApplicationSolar::keyCallback(int key, int action, int mods) {
 	else if (key == GLFW_KEY_D && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
 		m_view_transform = glm::translate(m_view_transform, glm::fvec3{ 0.1f, 0.0f, 0.0f });
 		uploadView();
+	}
+	// Assignment 3 - shading modes
+	else if (key == GLFW_KEY_1 && action != GLFW_PRESS) 
+	{
+		glUseProgram(m_shaders.at("planet").handle);
+		glUniform1f(m_shaders.at("planet").u_locs.at("ShaderMode"), 1);
+	}
+	else if (key == GLFW_KEY_2 && action != GLFW_PRESS) 
+	{
+		glUseProgram(m_shaders.at("planet").handle);
+		glUniform1f(m_shaders.at("planet").u_locs.at("ShaderMode"), 2);
 	}
 }
 
@@ -382,7 +478,8 @@ int main(int argc, char* argv[]) {
   Application::run<ApplicationSolar>(argc, argv, 3, 2);
 }
 
-ApplicationSolar::~ApplicationSolar() {
+ApplicationSolar::~ApplicationSolar() 
+{
 	glDeleteBuffers(1, &planet_object.vertex_BO);
 	glDeleteBuffers(1, &planet_object.element_BO);
 	glDeleteVertexArrays(1, &planet_object.vertex_AO);
