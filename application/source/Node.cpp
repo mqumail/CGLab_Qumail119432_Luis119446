@@ -68,13 +68,13 @@ Node* Node::getChildren(string passedChildren)
 {
 	Node* childNode = new Node();
 
-  for (std::list<Node*>::iterator i = children.begin(); i != children.end(); ++i)
-  {
-    if ((*i)->getName().compare(passedChildren))
-    {
-      childNode = *i;
-    }
-  }
+	for (std::vector<Node*>::iterator it = children.begin(); it != children.end(); ++it)
+	{
+		if ((*it)->getName().compare(passedChildren))
+		{
+		childNode = *it;
+		}
+	}
 
   return childNode;
 }
@@ -85,7 +85,7 @@ Node* Node::getChildren(string passedChildren)
 // Purpose: returns children member variable
 //
 //****************************************************
-std::list<Node*> Node::getChildrenList()
+vector<Node*> Node::getChildrenList()
 {
   return children;
 }
@@ -201,14 +201,94 @@ Node* Node::removeChildren(string passedString)
 {
 	Node* removedNode = new Node();
 
-  for (std::list<Node*>::iterator i = children.begin(); i != children.end(); ++i)
+  for (std::vector<Node*>::iterator it = children.begin(); it != children.end(); ++it)
   {
-    if ((*i)->getName().compare(passedString))
+    if ((*it)->getName().compare(passedString))
     {
-		removedNode = *i;
-      children.remove(*i);
+		removedNode = *it;
+      //children.erase(*it.);
     }
   }
 
   return removedNode;
+}
+
+double Node::getSize()
+{
+	return size;
+}
+
+void Node::setSize(double passedSize)
+{
+	size = passedSize;
+}
+
+double Node::getRotationSpeed()
+{
+	return rotationSpeed;
+}
+
+void Node::setRotationSpeed(double passedRotationSpeed)
+{
+	rotationSpeed = passedRotationSpeed;
+}
+
+void Node::setDistanceToOrigin(double passedDistanceToOrigin)
+{
+	distanceToOrigin = passedDistanceToOrigin;
+}
+
+double Node::getDistanceToOrigin()
+{
+	return distanceToOrigin;
+}
+
+void Node::setHasMoonAtIndex(int passedHasMoonAtIndex)
+{
+	hasMoonAtIndex = passedHasMoonAtIndex;
+}
+
+int Node::getHasMoonAtIndex()
+{
+	return hasMoonAtIndex;
+}
+
+bool Node::getIsMoon()
+{
+	return isMoon;
+}
+
+void Node::setIsMoon(bool passedIsMoon)
+{
+	isMoon = passedIsMoon;
+}
+
+float Node::getColorR()
+{
+	return colorR;
+}
+
+void Node::setColorR(float passedColorR)
+{
+	colorG = passedColorR;
+}
+
+float Node::getColorG()
+{
+	return colorG;
+}
+
+void Node::setColorG(float passedColorG)
+{
+	colorG = passedColorG;
+}
+
+float Node::getColorB()
+{
+	return colorB;
+}
+
+void Node::setColorB(float passedColorB)
+{
+	colorB = passedColorB;
 }

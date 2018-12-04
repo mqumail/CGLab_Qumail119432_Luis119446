@@ -5,8 +5,11 @@
 #include "utils.hpp"
 #include "shader_loader.hpp"
 #include "model_loader.hpp"
-#include "GeometryNode.hpp"
-#include "PointLightNode.hpp"
+#include "PointLightNode.hpp" // assignment 3
+#include "texture_loader.hpp" // assignment 4
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #include <glbinding/gl/gl.h>
 // use gl definitions from glbinding 
@@ -35,23 +38,234 @@ float random(float min, float max)
 ApplicationSolar::ApplicationSolar(std::string const& resource_path) : Application{resource_path}
  ,planet_object{}
  ,star_object{} // add this star_object{} since now we have model_object for stars
+ ,texture_object{}
  ,m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})}
  ,m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)}
 { 
+	// Method to initialize SceneGraph and setup the planets
+	initializeSceneGraph();
+
+	// Assignment 4 - Helper function to get all solar objects
+	getAllSolarObjects(solarSystem);
+
+	// Assignment 4
+	initializeTextures();
+
 	// Method to initialize planets
 	initializeGeometry();
 
 	// Method to initialize star points
 	initializeStarPoints();
 
-	// Method to initialize SceneGraph and setup the planets
-	initializeSceneGraph();
-	
 	initializeShaderPrograms();
 }
 
-void ApplicationSolar::initializeGeometry() {
-	model planet_model = model_loader::obj(m_resource_path + "models/sphere.obj", model::NORMAL);
+void ApplicationSolar::initializeSceneGraph()
+{
+	// solarSystem is the root for the sceneGraph
+	solarSystem->setName("Solar System");
+
+	theSceneGraph.setRoot(solarSystem);
+
+	// theSun is the child of solarSystem
+	GeometryNode* theSun = new GeometryNode();
+	theSun->setName("sun");
+	theSun->setSize(3.0f);
+	theSun->setRotationSpeed(1.0f);
+	theSun->setDistanceToOrigin(0.0f);
+	theSun->setHasMoonAtIndex(-1);
+	theSun->setIsMoon(false);
+	theSun->setColorR(0.9f);
+	theSun->setColorG(0.7f);
+	theSun->setColorB(0.2f);
+	theSun->angularSpeed = 4.0;
+	solarSystem->addChildren(theSun);
+
+	// the code below is creating 8 planets and setting them as children to the sun
+	// It is also positioning them so they are not all starting at the same position
+	GeometryNode* mercury = new GeometryNode();
+	mercury->setName("mercury");
+	mercury->setSize(0.3f);
+	mercury->setRotationSpeed(0.2f);
+	mercury->setDistanceToOrigin(5.0f);
+	mercury->setHasMoonAtIndex(-1);
+	mercury->setIsMoon(false);
+	mercury->setColorR(1.0f);
+	mercury->setColorG(1.0f);
+	mercury->setColorB(0.0f);
+	mercury->angularSpeed = 14.0;
+	theSun->addChildren(mercury);
+
+	GeometryNode* venus = new GeometryNode();
+	venus->setName("venus");
+	venus->setSize(0.89f);
+	venus->setRotationSpeed(0.2f);
+	venus->setDistanceToOrigin(10.0f);
+	venus->setHasMoonAtIndex(-1);
+	venus->setIsMoon(false);
+	venus->setColorR(1.0f);
+	venus->setColorG(0.0f);
+	venus->setColorB(1.0f);
+	venus->angularSpeed = 24.0;
+	theSun->addChildren(venus);
+
+	GeometryNode* earth = new GeometryNode();
+	earth->setName("earth");
+	earth->setSize(0.9f);
+	earth->setRotationSpeed(0.2f);
+	earth->setDistanceToOrigin(15.0f);
+	earth->setHasMoonAtIndex(4);
+	earth->setIsMoon(false);
+	earth->setColorR(0.0f);
+	earth->setColorG(1.0f);
+	earth->setColorB(1.0f);
+	earth->angularSpeed = 2.0;
+	theSun->addChildren(earth);
+
+	GeometryNode* moon = new GeometryNode();
+	moon->setName("moon");
+	moon->setSize(0.5f);
+	moon->setRotationSpeed(2.1f);
+	moon->setDistanceToOrigin(3.7f);
+	moon->setHasMoonAtIndex(-1);
+	moon->setIsMoon(true);
+	moon->setColorR(0.0f);
+	moon->setColorG(1.0f);
+	moon->setColorB(0.0f);
+	earth->addChildren(moon);
+
+	GeometryNode* mars = new GeometryNode();
+	mars->setName("mars");
+	mars->setSize(0.7f);
+	mars->setRotationSpeed(1.1f);
+	mars->setDistanceToOrigin(20.7f);
+	mars->setHasMoonAtIndex(-1);
+	mars->setIsMoon(false);
+	mars->setColorR(1.0f);
+	mars->setColorG(1.0f);
+	mars->setColorB(1.0f);
+	mars->angularSpeed = 7.0;
+	theSun->addChildren(mars);
+
+	GeometryNode* jupiter = new GeometryNode();
+	jupiter->setName("jupiter");
+	jupiter->setSize(1.5f);
+	jupiter->setRotationSpeed(1.2f);
+	jupiter->setDistanceToOrigin(25.7f);
+	jupiter->setHasMoonAtIndex(7);
+	jupiter->setIsMoon(false);
+	jupiter->setColorR(0.3f);
+	jupiter->setColorG(0.4f);
+	jupiter->setColorB(1.0f);
+	jupiter->angularSpeed = 39.0;
+	theSun->addChildren(jupiter);
+
+	GeometryNode* saturn = new GeometryNode();
+	saturn->setName("saturn");
+	saturn->setSize(1.2f);
+	saturn->setRotationSpeed(1.0f);
+	saturn->setDistanceToOrigin(30.7f);
+	saturn->setHasMoonAtIndex(-1);
+	saturn->setIsMoon(false);
+	saturn->setColorR(1.0f);
+	saturn->setColorG(0.4f);
+	saturn->setColorB(0.9f);
+	saturn->angularSpeed = 55.0;
+	theSun->addChildren(saturn);
+
+	GeometryNode* uranus = new GeometryNode();
+	uranus->setName("uranus");
+	uranus->setSize(1.1f);
+	uranus->setRotationSpeed(0.9f);
+	uranus->setDistanceToOrigin(35.7f);
+	uranus->setHasMoonAtIndex(-1);
+	uranus->setIsMoon(false);
+	uranus->setColorR(0.1f);
+	uranus->setColorG(0.3f);
+	uranus->setColorB(0.4f);
+	uranus->angularSpeed = 89.0;
+	theSun->addChildren(uranus);
+
+	GeometryNode* neptune = new GeometryNode();
+	neptune->setName("neptune");
+	neptune->setSize(1.0f);
+	neptune->setRotationSpeed(0.1f);
+	neptune->setDistanceToOrigin(40.7f);
+	neptune->setHasMoonAtIndex(-1);
+	neptune->setIsMoon(false);
+	neptune->setColorR(0.4f);
+	neptune->setColorG(0.2f);
+	neptune->setColorB(0.9f);
+	theSun->addChildren(neptune);
+
+	GeometryNode* pluto = new GeometryNode();
+	pluto->setName("pluto");
+	pluto->setSize(0.2f);
+	pluto->setRotationSpeed(1.2f);
+	pluto->setDistanceToOrigin(45.7f);
+	pluto->setHasMoonAtIndex(-1);
+	pluto->setIsMoon(false);
+	pluto->setColorR(0.0f);
+	pluto->setColorG(1.0f);
+	pluto->setColorB(0.4f);
+	theSun->addChildren(pluto);
+
+	GeometryNode* skybox = new GeometryNode();
+	skybox->setName("skybox");
+	skybox->setSize(50.0f);
+	skybox->setRotationSpeed(0.0f);
+	skybox->setDistanceToOrigin(0.0f);
+	skybox->setHasMoonAtIndex(-1);
+	skybox->setIsMoon(false);
+	skybox->setColorR(0.0f);
+	skybox->setColorG(0.0f);
+	skybox->setColorB(1.0f);
+	solarSystem->addChildren(skybox);
+}
+
+void ApplicationSolar::getAllSolarObjects(Node * theNode)
+{
+	vector<Node*> childList = theNode->getChildrenList();
+
+	// The line that will stop this function to run forever
+	if (childList.empty()) return;
+
+	for (std::vector<Node*>::iterator it = childList.begin(); it != childList.end(); ++it)
+	{
+		Node* currentChild = *it;
+		getAllSolarObjects(currentChild);
+		allSolarObjects.push_back(currentChild);
+	}
+}
+
+void ApplicationSolar::initializeTextures()
+{
+	pixel_data newTexture;
+
+	for (int i = 0; i < NUM_PLANETS; i++)
+	{
+		texture_object[i] = i;
+		newTexture = texture_loader::file(m_resource_path + "textures/" + allSolarObjects[i]->getName() + ".png");
+
+		glActiveTexture(GL_TEXTURE0 + i);
+		glGenTextures(1, &texture_object[i]);
+		glBindTexture(GL_TEXTURE_2D, texture_object[i]);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		glTexImage2D(GL_TEXTURE_2D,
+			0,
+			GL_RGB,
+			newTexture.width, newTexture.height,
+			0,
+			newTexture.channels, newTexture.channel_type, newTexture.ptr());
+	}
+}
+
+void ApplicationSolar::initializeGeometry() 
+{
+	model planet_model = model_loader::obj(m_resource_path + "models/sphere.obj", model::NORMAL | model::TEXCOORD);
 	cout << m_resource_path + "models/sphere.obj";
 
 	// generate vertex array object
@@ -74,6 +288,11 @@ void ApplicationSolar::initializeGeometry() {
 	glEnableVertexAttribArray(1);
 	// second attribute is 3 floats with no offset & stride
 	glVertexAttribPointer(1, model::NORMAL.components, model::NORMAL.type, GL_FALSE, planet_model.vertex_bytes, planet_model.offsets[model::NORMAL]);
+	
+	// texture - Assignment 4
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, model::TEXCOORD.components, model::TEXCOORD.type, GL_FALSE, planet_model.vertex_bytes, planet_model.offsets[model::TEXCOORD]);
+	
 	// generate generic buffer
 	glGenBuffers(1, &planet_object.element_BO);
 	// bind this as an vertex array buffer containing all attributes0.0
@@ -134,102 +353,35 @@ void ApplicationSolar::initializeStarPoints()
 	star_object.draw_mode = GL_POINTS;
 }
 
-//****************************************************
-// Function: initializeSceneGraph
-//
-// Purpose: Initialize the member variable 
-//			theSceneGraph with the planets and sun
-//
-//****************************************************
-void ApplicationSolar::initializeSceneGraph()
+void ApplicationSolar::initializeShaderPrograms() 
 {
-	// solarSystem is the root for the sceneGraph
-	GeometryNode* solarSystem = new GeometryNode();
-	solarSystem->setName("Solar System");
-
-	theSceneGraph.setRoot(solarSystem);
-
-	// theSun is the child of solarSystem
-	GeometryNode* theSun = new GeometryNode();
-	theSun->setName("Sun");
-	theSun->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 0.0, 0.0, 0.0 }));
-	theSun->angularSpeed = 4.0;
-	solarSystem->addChildren(theSun);
-
-	// the code below is creating 8 planets and setting them as children to the sun
-	// It is also positioning them so they are not all starting at the same position
-	GeometryNode* mercury = new GeometryNode();
-	mercury->setName("Mercury");
-	mercury->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 5.0, 0.0, 1.0 }));
-	mercury->angularSpeed = 14.0;
-	theSun->addChildren(mercury);
-
-	GeometryNode* venus = new GeometryNode();
-	venus->setName("Venus");
-	venus->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 10.0, 0.0, 10.0 }));
-	venus->angularSpeed = 24.0;
-	theSun->addChildren(venus);
-
-	GeometryNode* earth = new GeometryNode();
-	earth->setName("Earth");
-	earth->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 15.0, 0.0, 3.0 }));
-	earth->angularSpeed = 2.0;
-	theSun->addChildren(earth);
-
-	GeometryNode* mars = new GeometryNode();
-	mars->setName("Mars");
-	mars->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 20.0, 0.0, -1.0 }));
-	mars->angularSpeed = 7.0;
-	theSun->addChildren(mars);
-
-	GeometryNode* jupiter = new GeometryNode();
-	jupiter->setName("Jupiter");
-	jupiter->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 25.0, 0.0, 15.0 }));
-	jupiter->angularSpeed = 39.0;
-	theSun->addChildren(jupiter);
-
-	GeometryNode* saturn = new GeometryNode();
-	saturn->setName("Saturn");
-	saturn->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 30.0, 0.0, 19.0 }));
-	saturn->angularSpeed = 55.0;
-	theSun->addChildren(saturn);
-
-	GeometryNode* uranus = new GeometryNode();
-	uranus->setName("Uranus");
-	uranus->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 35.0, 0.0, 1.0 }));
-	uranus->angularSpeed = 89.0;
-	theSun->addChildren(uranus);
-
-	GeometryNode* neptune = new GeometryNode();
-	neptune->setName("Neptune");
-	neptune->setLocalTransform(glm::translate(glm::fmat4{}, glm::fvec3{ 40.0, 0.0, 5.0 }));
-	theSun->addChildren(neptune);
-}
-
-///////////////////////////// intialisation functions /////////////////////////
-// load shader sources
-void ApplicationSolar::initializeShaderPrograms() {
 	// store shader program objects in container
 	m_shaders.emplace("planet", shader_program{ {{GL_VERTEX_SHADER,m_resource_path + "shaders/simple.vert"},
-											 {GL_FRAGMENT_SHADER, m_resource_path + "shaders/simple.frag"}} });
+				{GL_FRAGMENT_SHADER, m_resource_path + "shaders/simple.frag"}} });
 
 	// request uniform locations for shader program
 	m_shaders.at("planet").u_locs["NormalMatrix"] = -1;
 	m_shaders.at("planet").u_locs["ModelMatrix"] = -1;
 	m_shaders.at("planet").u_locs["ViewMatrix"] = -1;
 	m_shaders.at("planet").u_locs["ProjectionMatrix"] = -1;
-
+	
 	// Assignment 3
 	m_shaders.at("planet").u_locs["DiffuseColor"] = -1;
 	m_shaders.at("planet").u_locs["SunPosition"] = -1;
 	m_shaders.at("planet").u_locs["ShaderMode"] = -1;
+
+	// Assignment 4
+	m_shaders.at("planet").u_locs["ColorTex"] = -1;
+	m_shaders.at("planet").u_locs["NormalMapIndex"] = -1;
+	m_shaders.at("planet").u_locs["UseBumpMap"] = -1;
+
 
 	// store shader program objects in container
 	m_shaders.emplace("star", shader_program{{
 		{GL_VERTEX_SHADER,m_resource_path + "shaders/vao.vert"}, 
 		{GL_FRAGMENT_SHADER, m_resource_path + "shaders/vao.frag"}
 		}});
-	
+
 	// request uniform locations for shader program
 	m_shaders.at("star").u_locs["ViewMatrix"] = -1;
 	m_shaders.at("star").u_locs["ProjectionMatrix"] = -1;
@@ -238,7 +390,7 @@ void ApplicationSolar::initializeShaderPrograms() {
 void ApplicationSolar::render() 
 {
 	uploadStars();
-	traverseSceneGraph(theSceneGraph.getRoot());
+	traverseSceneGraph();
 }
 
 // Method to actually draw the stars (render them), called by render method.
@@ -249,137 +401,84 @@ void ApplicationSolar::uploadStars()
 	glDrawArrays(star_object.draw_mode, 0, 6000);
 }
 
-//****************************************************
-// Function: traverseSceneGraph
-//
-// Purpose: Recursively traverses the SceneGraph
-//
-//****************************************************
-void ApplicationSolar::traverseSceneGraph(Node* theNode)
+void ApplicationSolar::traverseSceneGraph()
 {
-	// First it gets the child of the solar system which is the sun
-	// then it gets the children of the sun recursively and calls outputPlanet method to
-	// draw them on the graph
-	std::list<Node*> childList = theNode->getChildrenList();
-
-	// The line that will stop this function to run forever
-	if (childList.empty()) return;
-
-	for (std::list<Node*>::iterator i = childList.begin(); i != childList.end(); ++i)
+	for (int i = 0; i < NUM_PLANETS; i++) 
 	{
-		Node* currentChild = *i;
-		traverseSceneGraph(currentChild);
-		outputPlanet(currentChild);
+		uploadPlanet(i);
 	}
 }
 
-void ApplicationSolar::outputPlanet(Node * planet) 
+// Assignment 1
+void ApplicationSolar::uploadPlanet(int i) const
 {
-	std::string planetName = planet->getName();
+	Node* newPlanet = allSolarObjects[i];
 
-	// bind shader to upload uniforms
-	glUseProgram(m_shaders.at("planet").handle);
+	if (!newPlanet->getIsMoon())
+	{
+		glUseProgram(m_shaders.at("planet").handle);
+		glm::fmat4 model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime() * newPlanet->getRotationSpeed()), glm::fvec3{ 0.0f, 1.0f, 0.0f });
+		model_matrix = glm::translate(model_matrix, glm::fvec3{ 0.0f, 0.0f, newPlanet->getDistanceToOrigin() });
 
-	//glm::fmat4 model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime()) * planet->angularSpeed, glm::fvec3{ 0.0f, 1.0f, 0.0f });
-	glm::fmat4 model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime()), glm::fvec3{ 0.0f, 1.0f, 0.0f });
-	glm::vec3 tmpVec = glm::vec3(planet->getLocalTransform()[3]);
-	model_matrix = glm::translate(model_matrix, glm::fvec3{ tmpVec[0], tmpVec[1], tmpVec[2] });
-	glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
-		1, GL_FALSE, glm::value_ptr(model_matrix));
+		model_matrix = glm::scale(model_matrix, glm::fvec3{ newPlanet->getSize(), newPlanet->getSize(), newPlanet->getSize() });
 
-	// extra matrix for normal transformation to keep them orthogonal to surface
-	glm::fmat4 normal_matrix = glm::inverseTranspose(glm::inverse(m_view_transform) * model_matrix);
-	glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
-		1, GL_FALSE, glm::value_ptr(normal_matrix));
+		glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
+			1, GL_FALSE, glm::value_ptr(model_matrix));
 
-	// Assignment 3
-	PointLightNode* pointLightNode = new PointLightNode();
-	if (planetName == "Sun")
-	{
-		pointLightNode->setLightColor(glm::vec3(0.9f, 0.7f, 0.2f));
-		pointLightNode->setLightIntensity(1);
-	}
-	else if (planetName == "Mercury")
-	{
-		pointLightNode->setLightColor(glm::vec3(1.0f, 1.0f, 0.0f));
-		pointLightNode->setLightIntensity(1);
-	}
-	else if (planetName == "Venus")
-	{
-		pointLightNode->setLightColor(glm::vec3(1.0f, 0.0f, 1.0f));
-		pointLightNode->setLightIntensity(1);
-	}
-	else if (planetName == "Earth")
-	{
-		pointLightNode->setLightColor(glm::vec3(0.0f, 1.0f, 1.0f));
-		pointLightNode->setLightIntensity(1);
-	}
-	else if (planetName == "Mars")
-	{
-		pointLightNode->setLightColor(glm::vec3(1.0f, 1.0f, 1.0f));
-		pointLightNode->setLightIntensity(1);
-	}
-	else if (planetName == "Jupiter")
-	{
-		pointLightNode->setLightColor(glm::vec3(0.3f, 0.4f, 1.0f));
-		pointLightNode->setLightIntensity(1);
-	}
-	else if (planetName == "Saturn")
-	{
-		pointLightNode->setLightColor(glm::vec3(1.0f, 0.4f, 0.9f));
-		pointLightNode->setLightIntensity(1);
-	}
-	else if (planetName == "Uranus")
-	{
-		pointLightNode->setLightColor(glm::vec3(0.1f, 0.3f, 0.4f));
-		pointLightNode->setLightIntensity(1);
-	}
-	else if (planetName == "Neptune")
-	{
-		pointLightNode->setLightColor(glm::vec3(0.4f, 0.2f, 0.9f));
-		pointLightNode->setLightIntensity(1);
-	}
-	
-	glm::vec3 planetColor(pointLightNode->getLightColor());
-	glUniform3fv(m_shaders.at("planet").u_locs.at("DiffuseColor"), 1, glm::value_ptr(planetColor));
+		// extra matrix for normal transformation to keep them orthogonal to surface
+		glm::fmat4 normal_matrix = glm::inverseTranspose(glm::inverse(m_view_transform) * model_matrix);
+		glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
+			1, GL_FALSE, glm::value_ptr(normal_matrix));
 
-	glm::fmat4 view_matrix = glm::inverse(m_view_transform);
-	
+		//assignment 3
+		glm::vec3 planetColor(newPlanet->getColorR(), newPlanet->getColorG(), newPlanet->getColorB());
+		glUniform3fv(m_shaders.at("planet").u_locs.at("DiffuseColor"), 1, glm::value_ptr(planetColor));
 
-	if (!planetName.compare("Sun"))
-	{
-		origin = glm::vec4{ 0.0, 0.0, 0.0 , 0.0 };
+		glm::fmat4 view_matrix = glm::inverse(m_view_transform);
+		std::string str = newPlanet->getName();
+
+		if (!str.compare("sun")) 
+		{
+			origin = glm::vec4{ 0.0, 0.0, 0.0, 0.0 };
+		}
+		else 
+		{
+			origin = glm::vec4{ 0.0, 0.0, 0.0, 1.0 };
+		}
+
+		glm::vec4 sunPos4 = view_matrix * origin;
+		glm::vec3 sunPos3(sunPos4);
+		glUniform3fv(m_shaders.at("planet").u_locs.at("SunPosition"), 1, glm::value_ptr(sunPos3));
+
+		glActiveTexture(GL_TEXTURE0 + i);
+		int normalMapID = NUM_PLANETS;
+
+		glUseProgram(m_shaders.at("planet").handle);
+		glUniform1i(m_shaders.at("planet").u_locs.at("ColorTex"), i);
+		glUniform1i(m_shaders.at("planet").u_locs.at("NormalMapIndex"), normalMapID);
+
+		//add planet rotation on it's axis - const for all except skybox
+		if (str.compare("skybox")) 
+		{
+			model_matrix = glm::rotate(model_matrix, float(glfwGetTime() * M_PI / 10), glm::fvec3{ 0.0f, 1.0f, 0.0f });
+		}
+
+		if (!str.compare("earth")) 
+		{
+			glUniform1f(m_shaders.at("planet").u_locs.at("UseBumpMap"), true);
+		}
+		else 
+		{
+			glUniform1f(m_shaders.at("planet").u_locs.at("UseBumpMap"), false);
+		}
+
+		// bind the VAO to draw
+		glBindVertexArray(planet_object.vertex_AO);
+
+		// draw bound vertex array using bound shader
+		glDrawElements(planet_object.draw_mode, planet_object.num_elements, model::INDEX.type, NULL);
 	}
-	else
-	{
-		origin = glm::vec4{ 0.0, 0.0, 0.0 , 1.0 };
-	}
-	
-	glm::vec4 pos4 = view_matrix * origin;
-	glm::vec3 pos3(pos4);
-	glUniform3fv(m_shaders.at("planet").u_locs.at("SunPosition"), 1, glm::value_ptr(pos3));
-
-	// bind the VAO to draw
-	glBindVertexArray(planet_object.vertex_AO);
-
-	// draw bound vertex array using bound shader
-	glDrawElements(planet_object.draw_mode, planet_object.num_elements, model::INDEX.type, NULL);
 }
-
-//ApplicationSolar::Star ApplicationSolar::initializeStar(float position[], float color[], string name) {
-//	Star newStar;
-//	newStar.position[0] = position[0];
-//	newStar.position[1] = position[1];
-//	newStar.position[2] = position[2];
-//	newStar.color[0] = color[0];
-//	newStar.color[1] = color[1];
-//	newStar.color[2] = color[2];
-//	newStar.name = name;
-//
-//	star_list.push_back(newStar);
-//
-//	return newStar;
-//}
 
 // update uniform locations
 void ApplicationSolar::uploadUniforms()
@@ -426,10 +525,6 @@ void ApplicationSolar::uploadProjection()
 	  1, GL_FALSE, glm::value_ptr(m_view_projection));
 }
 
-
-
-///////////////////////////// callback functions for window events ////////////
-// handle key input
 void ApplicationSolar::keyCallback(int key, int action, int mods) {
 	if (key == GLFW_KEY_W && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
 		m_view_transform = glm::translate(m_view_transform, glm::fvec3{ 0.0f, 0.0f, -0.1f });

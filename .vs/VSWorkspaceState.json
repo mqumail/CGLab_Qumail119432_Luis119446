@@ -1,8 +1,10 @@
 {
   "ExpandedNodes": [
     "",
-    "\\resources\\models",
-    "\\resources\\shaders"
+    "\\application",
+    "\\resources",
+    "\\resources\\shaders",
+    "\\resources\\textures"
   ],
   "PreviewInSolutionExplorer": false
 }

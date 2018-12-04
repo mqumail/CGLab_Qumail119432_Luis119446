@@ -5,6 +5,9 @@
 #include "model.hpp"
 #include "structs.hpp"
 #include "SceneGraph.hpp"
+#include "GeometryNode.hpp"
+
+#define NUM_PLANETS 12
 
 // gpu representation of model
 class ApplicationSolar : public Application {
@@ -33,9 +36,11 @@ class ApplicationSolar : public Application {
   // draw all objects
   void render();
   // draw all planets
-  void outputPlanet(Node * planet);
+  void uploadPlanet(int i) const;
   // upload stars
   void uploadStars();
+  // initialize textures
+  void initializeTextures();
 
  protected:
   void initializeSceneGraph();
@@ -49,7 +54,8 @@ class ApplicationSolar : public Application {
   // upload view matrix
   void uploadView();
 
-  void traverseSceneGraph(Node* theNode);
+  void traverseSceneGraph();
+  void getAllSolarObjects(Node * theNode);
 
   // cpu representation of model
   model_object planet_object;
@@ -63,9 +69,17 @@ class ApplicationSolar : public Application {
   glm::fmat4 m_view_projection;
 
   SceneGraph theSceneGraph;
+  GeometryNode* solarSystem = new GeometryNode();
 
   // buffers
   vector <float> star_buffer;
+
+  // Assignment 4
+  vector<Node*> allSolarObjects;
+
+  // cpu representation of textures
+  GLuint texture_object[NUM_PLANETS + 1];
+
 };
 
 #endif

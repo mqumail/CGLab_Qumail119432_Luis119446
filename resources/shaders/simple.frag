@@ -1,69 +1,76 @@
 #version 150
 
 in  vec3 pass_Normal;
-
 //ass 3
 in vec3 pass_VertexViewPosition;
 in vec3 pass_LightSourceViewPosition;
 in vec3 pass_DiffuseColor;
 in float pass_ShaderMode;
+in vec2 pass_TexCoord;
+in vec3 pass_Tangent;
+
+uniform sampler2D ColorTex;
+uniform sampler2D NormalMapIndex;
+uniform bool UseBumpMap; 
 
 out vec4 out_Color;
 
-// Constans for Ambient, Diffuse, Specular, specularIntensity and gloss
 float ambientK = 0.5;
 float diffuseK = 0.8;
 float specularK = 1.0;															  //Ks
-float glossiness = 2.0;
-float specularIntensity = 0.0;
 
 vec3 specColor = vec3(1.0, 1.0, 1.0);                                             //Is
 
-// For ToonShading
-vec3 coloredOutline = vec3(0.608, 0.259, 0.745);
+void main() {
+  // Texture 
+  vec4 color = texture(ColorTex, pass_TexCoord);
+ //vec4 color = vec4(pass_DiffuseColor, 1.0);
+  
+  vec3 viewDir = normalize(-pass_VertexViewPosition);									// V
+  vec3 normal = normalize(pass_Normal); 												// N
+  vec3 lightDir = normalize(pass_LightSourceViewPosition - pass_VertexViewPosition); 	// I
+  vec3 halfDir = normalize(lightDir + viewDir);											// H
+ 
+  
+ //colour = colour read from texture
+  vec3 baseDiffuseColor = vec3(color);
+ 
+ //cel shading outline colour:
+  vec3 outLineColor = vec3(0, 0.050, 1);
+  
+  //AMBIENT part of light
+  vec3 ambient = ambientK  * baseDiffuseColor;											// Ka*Ia
+ 
+  //DIFFUSE
+  float lambertian = max(dot(lightDir,normal), 0.0);									//Lambertian = <Normal, LightDir> 
+  vec3 diffuse = diffuseK * baseDiffuseColor * lambertian;								// Kd*Id
+  
+  //SPECULAR
+  float specAngle = max(dot(halfDir, normal), 0.0);										//p
+  //specular = pow(specAngle, specularK);
+  float specular = specularK * pow(specAngle, 10);
+  
+  //combine three lighting components
+  //I = Ka * Ia + Kd * Id * <Normal, LightDir> + Ks * Is * <Halfway, Normal>^4*glossiness
+  vec3 colorLinear = ambient + diffuse + specular * specColor;
 
-void main() 
-{
-  // First normalize the normal vector
-  vec3 normal = normalize(pass_Normal);
-  // Then normalize the direction of light (origin - position of vertex)
-  vec3 viewDir = normalize(pass_LightSourceViewPosition - pass_VertexViewPosition);
-  
-  // Calculate ambient light by multiplying the constant with DiffuseColor
-  vec3 ambient = ambientK * pass_DiffuseColor;
-  
-  // Use Lambert's law to get the Diffuse reflection
-  float lambertian = max(dot(viewDir, normal), 0.0);
-  vec3 diffuse = lambertian * pass_DiffuseColor * diffuseK;
-  
-  // Normalize the negative position of vertex
-  viewDir = normalize(-pass_VertexViewPosition);
-  
-  if (lambertian > 0.0)
-  {
-	  vec3 halfwayVector = normalize(viewDir + viewDir);
-	  float specAngle = max(dot(halfwayVector, normal), 0.0);
-	  specularIntensity = pow(specAngle, glossiness);
+  if(pass_ShaderMode == 1){
+	//I = Ka * Ia + Kd * Id * <Normal, LightDir> + Ks * Is * <Halfway, Normal>^4*glossiness
+	colorLinear = ambient + diffuse + specular * specColor;
+	//out_Color = vec4(abs(normalize(pass_Normal)), 1.0);
   }
-  
-  vec3 specular = specularK * specColor * specularIntensity;
-  
-  // Convert the ambient, diffuse and specular in to a vec4
-  out_Color = vec4(ambient + diffuse + specular, 1.0);
-  
-  if (pass_ShaderMode == 2.0)
-  {
-		//calculate the view angle cosine
-        float viewAngleCosine = dot(normal, viewDir);
-
-		// Only color the outline of planets if viewAngleCosine is less than 0.3
-        if (viewAngleCosine < 0.3) 
-		{
-            out_Color = vec4(coloredOutline, 1.0);
-        }
-		else
-		{
-            out_Color = ceil(out_Color * 4) / 4;
-        } 
+  else if(pass_ShaderMode == 2){
+	float viewAngle = dot(viewDir, normal);
+	if(viewAngle < 0.2 && viewAngle > -0.2){// make a contour
+		colorLinear = outLineColor;
+	}
+	else{//cell shading
+		float u_numShades = 6;
+		//round intensities to a limited number of shades
+		vec3 shadeIntensity = round(colorLinear * u_numShades)/ u_numShades;
+		colorLinear.xyz = baseDiffuseColor *shadeIntensity;
+	}
+	
   }
+  out_Color = vec4(colorLinear, 1.0);
 }
