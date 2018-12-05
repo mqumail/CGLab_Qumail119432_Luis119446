@@ -10,8 +10,6 @@ in vec2 pass_TexCoord;
 in vec3 pass_Tangent;
 
 uniform sampler2D ColorTex;
-uniform sampler2D NormalMapIndex;
-uniform bool UseBumpMap; 
 
 out vec4 out_Color;
 

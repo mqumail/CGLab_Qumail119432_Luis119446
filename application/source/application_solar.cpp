@@ -48,7 +48,7 @@ ApplicationSolar::ApplicationSolar(std::string const& resource_path) : Applicati
 	// Assignment 4 - Helper function to get all solar objects
 	getAllSolarObjects(solarSystem);
 
-	// Assignment 4
+	// Assignment 4 - Need to do this before we initialize the Geometry
 	initializeTextures();
 
 	// Method to initialize planets
@@ -225,6 +225,8 @@ void ApplicationSolar::initializeSceneGraph()
 
 void ApplicationSolar::getAllSolarObjects(Node * theNode)
 {
+	// Recursive function to get all children and grandchildren from
+	// the passed in Node and added them to a vector
 	vector<Node*> childList = theNode->getChildrenList();
 
 	// The line that will stop this function to run forever
@@ -240,8 +242,12 @@ void ApplicationSolar::getAllSolarObjects(Node * theNode)
 
 void ApplicationSolar::initializeTextures()
 {
+	// Load texture into this variable
 	pixel_data newTexture;
 
+	// Run a loop for all planets/solarObjects
+	// Grab the texture from the resources/textures folder 
+	// depending on the object and initialize these textures 
 	for (int i = 0; i < NUM_PLANETS; i++)
 	{
 		texture_object[i] = i;
@@ -265,6 +271,7 @@ void ApplicationSolar::initializeTextures()
 
 void ApplicationSolar::initializeGeometry() 
 {
+	// add the model::TEXCOORD at the end
 	model planet_model = model_loader::obj(m_resource_path + "models/sphere.obj", model::NORMAL | model::TEXCOORD);
 	cout << m_resource_path + "models/sphere.obj";
 
@@ -372,8 +379,8 @@ void ApplicationSolar::initializeShaderPrograms()
 
 	// Assignment 4
 	m_shaders.at("planet").u_locs["ColorTex"] = -1;
-	m_shaders.at("planet").u_locs["NormalMapIndex"] = -1;
-	m_shaders.at("planet").u_locs["UseBumpMap"] = -1;
+	//m_shaders.at("planet").u_locs["NormalMapIndex"] = -1;
+	//m_shaders.at("planet").u_locs["UseBumpMap"] = -1;
 
 
 	// store shader program objects in container
@@ -450,27 +457,10 @@ void ApplicationSolar::uploadPlanet(int i) const
 		glm::vec3 sunPos3(sunPos4);
 		glUniform3fv(m_shaders.at("planet").u_locs.at("SunPosition"), 1, glm::value_ptr(sunPos3));
 
+		// Assignment 4
 		glActiveTexture(GL_TEXTURE0 + i);
-		int normalMapID = NUM_PLANETS;
-
 		glUseProgram(m_shaders.at("planet").handle);
 		glUniform1i(m_shaders.at("planet").u_locs.at("ColorTex"), i);
-		glUniform1i(m_shaders.at("planet").u_locs.at("NormalMapIndex"), normalMapID);
-
-		//add planet rotation on it's axis - const for all except skybox
-		if (str.compare("skybox")) 
-		{
-			model_matrix = glm::rotate(model_matrix, float(glfwGetTime() * M_PI / 10), glm::fvec3{ 0.0f, 1.0f, 0.0f });
-		}
-
-		if (!str.compare("earth")) 
-		{
-			glUniform1f(m_shaders.at("planet").u_locs.at("UseBumpMap"), true);
-		}
-		else 
-		{
-			glUniform1f(m_shaders.at("planet").u_locs.at("UseBumpMap"), false);
-		}
 
 		// bind the VAO to draw
 		glBindVertexArray(planet_object.vertex_AO);

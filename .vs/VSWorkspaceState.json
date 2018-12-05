@@ -1,10 +1,9 @@
 {
   "ExpandedNodes": [
     "",
-    "\\application",
     "\\resources",
-    "\\resources\\shaders",
-    "\\resources\\textures"
+    "\\resources\\shaders"
   ],
+  "SelectedNode": "\\resources\\shaders\\simple.frag",
   "PreviewInSolutionExplorer": false
 }
