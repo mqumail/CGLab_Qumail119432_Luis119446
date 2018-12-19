@@ -53,7 +53,8 @@ class ApplicationSolar : public Application {
   void uploadProjection();
   // upload view matrix
   void uploadView();
-
+  void initializeFrameBuffer();	// _ ass5
+  void initializeScreenQuad();	// _ ass5
   void traverseSceneGraph();
   void getAllSolarObjects(Node * theNode);
 
@@ -78,7 +79,12 @@ class ApplicationSolar : public Application {
   vector<Node*> allSolarObjects;
 
   // cpu representation of textures
-  GLuint texture_object[NUM_PLANETS + 1];
+  texture_object texture_object[NUM_PLANETS + 1];
+
+  model_object screenquad_object;	// _ ass5
+
+  GLuint fbo_handle = 0;	// frame buffer object _ ass5
+  GLuint rb_handle = 0;	// render buffor object _ ass5
 
 };
 

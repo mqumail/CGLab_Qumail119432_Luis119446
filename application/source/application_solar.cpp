@@ -28,6 +28,10 @@ using namespace std;
 
 glm::vec4 origin;
 
+// boolean values for screen quad effects _ ass5
+bool horizontalmirror = false;
+bool verticalmirror = false;
+
 // function to generate a random float between min and max parameters
 // ref: https://stackoverflow.com/questions/5289613/generate-random-float-between-two-floats
 float random(float min, float max)
@@ -39,6 +43,7 @@ ApplicationSolar::ApplicationSolar(std::string const& resource_path) : Applicati
  ,planet_object{}
  ,star_object{} // add this star_object{} since now we have model_object for stars
  ,texture_object{}
+ ,screenquad_object{}	// _ ass5
  ,m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})}
  ,m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)}
 { 
@@ -58,6 +63,9 @@ ApplicationSolar::ApplicationSolar(std::string const& resource_path) : Applicati
 	initializeStarPoints();
 
 	initializeShaderPrograms();
+
+	initializeFrameBuffer();	// _ ass5
+	initializeScreenQuad();	// _ ass5
 }
 
 void ApplicationSolar::initializeSceneGraph()
@@ -250,12 +258,12 @@ void ApplicationSolar::initializeTextures()
 	// depending on the object and initialize these textures 
 	for (int i = 0; i < NUM_PLANETS; i++)
 	{
-		texture_object[i] = i;
+		texture_object[i].handle = i;
 		newTexture = texture_loader::file(m_resource_path + "textures/" + allSolarObjects[i]->getName() + ".png");
 
 		glActiveTexture(GL_TEXTURE0 + i);
-		glGenTextures(1, &texture_object[i]);
-		glBindTexture(GL_TEXTURE_2D, texture_object[i]);
+		glGenTextures(1, &texture_object[i].handle);
+		glBindTexture(GL_TEXTURE_2D, texture_object[i].handle);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -366,21 +374,28 @@ void ApplicationSolar::initializeShaderPrograms()
 	m_shaders.emplace("planet", shader_program{ {{GL_VERTEX_SHADER,m_resource_path + "shaders/simple.vert"},
 				{GL_FRAGMENT_SHADER, m_resource_path + "shaders/simple.frag"}} });
 
-	// request uniform locations for shader program
-	m_shaders.at("planet").u_locs["NormalMatrix"] = -1;
 	m_shaders.at("planet").u_locs["ModelMatrix"] = -1;
 	m_shaders.at("planet").u_locs["ViewMatrix"] = -1;
 	m_shaders.at("planet").u_locs["ProjectionMatrix"] = -1;
-	
-	// Assignment 3
-	m_shaders.at("planet").u_locs["DiffuseColor"] = -1;
-	m_shaders.at("planet").u_locs["SunPosition"] = -1;
-	m_shaders.at("planet").u_locs["ShaderMode"] = -1;
+	m_shaders.at("planet").u_locs["lightSrc"] = -1;	// for blinn-phong reflection _ ass3
+	m_shaders.at("planet").u_locs["modeswitch"] = -1;	// mode switch _ ass3
+	m_shaders.at("planet").u_locs["ColorTex"] = -1;	// texture color _ ass4
 
-	// Assignment 4
-	m_shaders.at("planet").u_locs["ColorTex"] = -1;
-	//m_shaders.at("planet").u_locs["NormalMapIndex"] = -1;
-	//m_shaders.at("planet").u_locs["UseBumpMap"] = -1;
+	//// request uniform locations for shader program
+	//m_shaders.at("planet").u_locs["NormalMatrix"] = -1;
+	//m_shaders.at("planet").u_locs["ModelMatrix"] = -1;
+	//m_shaders.at("planet").u_locs["ViewMatrix"] = -1;
+	//m_shaders.at("planet").u_locs["ProjectionMatrix"] = -1;
+	//
+	//// Assignment 3
+	//m_shaders.at("planet").u_locs["DiffuseColor"] = -1;
+	//m_shaders.at("planet").u_locs["lightSrc"] = -1;
+	//m_shaders.at("planet").u_locs["modeswitch"] = -1;
+
+	//// Assignment 4
+	//m_shaders.at("planet").u_locs["ColorTex"] = -1;
+	////m_shaders.at("planet").u_locs["NormalMapIndex"] = -1;
+	////m_shaders.at("planet").u_locs["UseBumpMap"] = -1;
 
 
 	// store shader program objects in container
@@ -392,12 +407,113 @@ void ApplicationSolar::initializeShaderPrograms()
 	// request uniform locations for shader program
 	m_shaders.at("star").u_locs["ViewMatrix"] = -1;
 	m_shaders.at("star").u_locs["ProjectionMatrix"] = -1;
+
+	// shader for screen quad _ ass5
+	m_shaders.emplace("quad", shader_program{ {
+		{GL_VERTEX_SHADER,m_resource_path + "shaders/quad.vert"},
+		{GL_FRAGMENT_SHADER, m_resource_path + "shaders/quad.frag"}
+		} });
+
+	// request uniform locations for star shader program _ ass2
+	m_shaders.at("quad").u_locs["ColorTex"] = -1;	// texture color
+	m_shaders.at("quad").u_locs["HorizontalMirror"] = -1;	// Horizontal Mirror Switch
+	m_shaders.at("quad").u_locs["VerticalMirror"] = -1;	// Vertical Mirror Switch
+}
+
+void ApplicationSolar::initializeFrameBuffer()
+{
+	GLsizei WIDTH = 640;	// horizontal resolution
+	GLsizei HEIGHT = 480;	// vetical resolution
+
+	// create texture object
+	glGenTextures(1, &texture_object[11].handle);
+	// bind object
+	glBindTexture(GL_TEXTURE_2D, texture_object[11].handle);
+	// define sampling parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// define texture data and format
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, WIDTH, HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+	// generate Renderbuffer object
+	glGenRenderbuffers(1, &rb_handle);
+	// bind object
+	glBindRenderbuffer(GL_RENDERBUFFER, rb_handle);
+	// specify object properties
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, WIDTH, HEIGHT);
+
+	// generate frame buffer object
+	glGenFramebuffers(1, &fbo_handle);
+	// bind FBO for configuration
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo_handle);
+	// specify Texture Object attachments
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture_object[11].handle, 0);
+	// specify Renderbuffer Object attachments
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rb_handle);
+
+	// an array for color attachments
+	GLenum draw_buffers[1] = { GL_COLOR_ATTACHMENT0 };
+	// color attachments to receive fragments
+	glDrawBuffers(1, draw_buffers);
+
+	// frame buffer status should be valid
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "frame buffer not complete" << std::endl;
+	}
+}
+
+void ApplicationSolar::initializeScreenQuad()
+{
+	// coordinates
+	static const GLfloat quad_data[] = {
+		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,	// v1
+		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,	// v2
+		-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,	// v4
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f	// v3
+	};
+
+	// generate vertex array object
+	glGenVertexArrays(1, &screenquad_object.vertex_AO);
+	// bind the array for attaching buffers
+	glBindVertexArray(screenquad_object.vertex_AO);
+
+	// generate generic buffer
+	glGenBuffers(1, &screenquad_object.vertex_BO);
+	// bind this as an vertex array buffer containing all attributes
+	glBindBuffer(GL_ARRAY_BUFFER, screenquad_object.vertex_BO);
+	// configure currently bound array buffer
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quad_data), quad_data, GL_STATIC_DRAW);
+
+	// activate first attribute on gpu
+	glEnableVertexAttribArray(0);
+	// first attribute is 3 floats with no offset & stride
+	glVertexAttribPointer(0, model::POSITION.components, model::POSITION.type, GL_FALSE, 5 * sizeof(float), 0);
+	// activate third attribute on gpu
+	glEnableVertexAttribArray(1);
+	// third attribute is 3 floats with no offset & stride
+	glVertexAttribPointer(1, model::TEXCOORD.components, model::TEXCOORD.type, GL_FALSE, 5 * sizeof(float), (GLvoid*)(3 * sizeof(float)));
 }
 
 void ApplicationSolar::render() 
 {
+	// bind the new FBO _ ass5
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo_handle);
+	// clear the framebuffer _ ass5
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	uploadStars();
 	traverseSceneGraph();
+
+	// bind the default frame buffer and render the screen quad _ ass5
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glUseProgram(m_shaders.at("quad").handle);
+	glActiveTexture(GL_TEXTURE11);
+	glBindTexture(GL_TEXTURE_2D, texture_object[11].handle);
+	int color_sampler_location = glGetUniformLocation(m_shaders.at("quad").handle, "ColorTex");
+	glUniform1i(color_sampler_location, 11);
+	glBindVertexArray(screenquad_object.vertex_AO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 // Method to actually draw the stars (render them), called by render method.
@@ -432,14 +548,14 @@ void ApplicationSolar::uploadPlanet(int i) const
 		glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
 			1, GL_FALSE, glm::value_ptr(model_matrix));
 
-		// extra matrix for normal transformation to keep them orthogonal to surface
-		glm::fmat4 normal_matrix = glm::inverseTranspose(glm::inverse(m_view_transform) * model_matrix);
-		glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
-			1, GL_FALSE, glm::value_ptr(normal_matrix));
+		//// extra matrix for normal transformation to keep them orthogonal to surface
+		//glm::fmat4 normal_matrix = glm::inverseTranspose(glm::inverse(m_view_transform) * model_matrix);
+		//glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
+		//	1, GL_FALSE, glm::value_ptr(normal_matrix));
 
 		//assignment 3
-		glm::vec3 planetColor(newPlanet->getColorR(), newPlanet->getColorG(), newPlanet->getColorB());
-		glUniform3fv(m_shaders.at("planet").u_locs.at("DiffuseColor"), 1, glm::value_ptr(planetColor));
+		//glm::vec3 planetColor(newPlanet->getColorR(), newPlanet->getColorG(), newPlanet->getColorB());
+		//glUniform3fv(m_shaders.at("planet").u_locs.at("DiffuseColor"), 1, glm::value_ptr(planetColor));
 
 		glm::fmat4 view_matrix = glm::inverse(m_view_transform);
 		std::string str = newPlanet->getName();
@@ -455,7 +571,7 @@ void ApplicationSolar::uploadPlanet(int i) const
 
 		glm::vec4 sunPos4 = view_matrix * origin;
 		glm::vec3 sunPos3(sunPos4);
-		glUniform3fv(m_shaders.at("planet").u_locs.at("SunPosition"), 1, glm::value_ptr(sunPos3));
+		glUniform3fv(m_shaders.at("planet").u_locs.at("lightSrc"), 1, glm::value_ptr(sunPos3));
 
 		// Assignment 4
 		glActiveTexture(GL_TEXTURE0 + i);
@@ -489,7 +605,7 @@ void ApplicationSolar::uploadView()
   // Assignment 3
   glm::vec4 sunPos4 = view_matrix * origin;
   glm::vec3 sunPos3(sunPos4);
-  glUniform3fv(m_shaders.at("planet").u_locs.at("SunPosition"), 1, glm::value_ptr(sunPos3));
+  glUniform3fv(m_shaders.at("planet").u_locs.at("lightSrc"), 1, glm::value_ptr(sunPos3));
   
   // upload matrix to gpu
   glUseProgram(m_shaders.at("planet").handle);
@@ -504,6 +620,10 @@ void ApplicationSolar::uploadView()
 
 void ApplicationSolar::uploadProjection() 
 {
+	// for resize when window size changes _ ass5 (position?)
+	glUseProgram(m_shaders.at("quad").handle);
+	initializeFrameBuffer();
+
   // upload matrix to gpu
 	glUseProgram(m_shaders.at("planet").handle);
   glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ProjectionMatrix"),
@@ -536,12 +656,12 @@ void ApplicationSolar::keyCallback(int key, int action, int mods) {
 	else if (key == GLFW_KEY_1 && action != GLFW_PRESS) 
 	{
 		glUseProgram(m_shaders.at("planet").handle);
-		glUniform1f(m_shaders.at("planet").u_locs.at("ShaderMode"), 1);
+		glUniform1f(m_shaders.at("planet").u_locs.at("modeswitch"), 1);
 	}
 	else if (key == GLFW_KEY_2 && action != GLFW_PRESS) 
 	{
 		glUseProgram(m_shaders.at("planet").handle);
-		glUniform1f(m_shaders.at("planet").u_locs.at("ShaderMode"), 2);
+		glUniform1f(m_shaders.at("planet").u_locs.at("modeswitch"), 2);
 	}
 }
 
@@ -573,4 +693,12 @@ ApplicationSolar::~ApplicationSolar()
 	glDeleteBuffers(1, &star_object.vertex_BO);
 	glDeleteBuffers(1, &star_object.element_BO);
 	glDeleteVertexArrays(1, &star_object.vertex_AO);
+
+	for (int i = 0; i < 12; i++)
+		glDeleteTextures(1, &texture_object[i].handle);	// _ ass4
+
+	// screen quad object deletion _ ass5
+	glDeleteBuffers(1, &screenquad_object.vertex_BO);
+	glDeleteBuffers(1, &screenquad_object.element_BO);
+	glDeleteVertexArrays(1, &screenquad_object.vertex_AO);
 }
